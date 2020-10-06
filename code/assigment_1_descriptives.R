@@ -10,10 +10,10 @@ library(dplyr)
 library(purrr)
 library(here)
 
-figs <- "/Users/matej/Projects/TPM/figures/"
+figs <- "/Users/matej/Projects/transport_planning_methods/figures/"
 
 # 0 load data ----
-load("/Users/matej/Projects/TPM/Data-20201001/Mobidrive_2002.RData")
+load("/Users/matej/Projects/transport_planning_methods/Data-20201001/Mobidrive_2002.RData")
 
 # 1 preps ----
 # filter for karlsruhe and mainstudy participants
@@ -172,28 +172,17 @@ ggsave(file = paste0(figs,"nroftrips_per_weekday.jpg"), width = 20, height = 15,
 trip_p_hh <- trip %>%
   inner_join(p_hh, by = c("UID","CITYCODE","STUDYCOD","HH_NR","P_NR"))
 
-
-trip_p_hh %>%
-  filter(!is.na(hh_inc_f)) %>%
-  group_by(UID, hh_inc_f) %>%
-  summarise(count = n()) %>%
-  ggplot(aes(y = count, x = hh_inc_f)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 315, vjust = 0.5)) +
-  ylab("Number of trips") + xlab("Income")
-ggsave(file = paste0(figs, "nroftrips_per_income.jpg"), width = 20, height = 15, units = "cm")
-
 # Eta correlation
 eta <- function(df, squared = FALSE) {
   ## group mean
   mg <- df %>%
-    group_by(hh_inc_f) %>%
+    group_by(category) %>%
     summarise(mean = mean(count)) %>%
     pull(mean)
   
   ## group size
   ng <- df %>%
-    group_by(hh_inc_f) %>%
+    group_by(category) %>%
     summarise(count = n()) %>%
     pull(count)
   
@@ -216,16 +205,33 @@ eta <- function(df, squared = FALSE) {
   return(res)
 }
 
+# Eta correlation - trips per day-of-week
+df <- trip_p_hh %>%
+  filter(!is.na(dow_f)) %>%
+  group_by(UID, dow_f) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  select(category=dow_f, count)
+eta(df)
+
+
+trip_p_hh %>%
+  filter(!is.na(hh_inc_f)) %>%
+  group_by(UID, hh_inc_f) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(y = count, x = hh_inc_f)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 315, vjust = 0.5)) +
+  ylab("Number of trips") + xlab("Income")
+ggsave(file = paste0(figs, "nroftrips_per_income.jpg"), width = 20, height = 15, units = "cm")
 
 df <- trip_p_hh %>%
   filter(!is.na(hh_inc_f)) %>%
   group_by(UID, hh_inc_f) %>%
   summarise(count = n()) %>%
   ungroup() %>%
-  select(hh_inc_f, count)
-df
+  select(category=hh_inc_f, count)
 eta(df)
-
 
 
 # total distance travelled (vs income)
@@ -315,7 +321,7 @@ weekday_tr %>%
                     breaks = c("1", "2"), labels = c("Peak hour", "Non-peak hour")) +
   scale_x_continuous(breaks=seq(0,24,1)) +
   labs(title = "Number of trips by hour", x = "Hour", y = "Total trips")
-ggsave(file = here::here("plots","numberoftripsbyhour_peakvsnonpeak.pdf"), width = 20, height = 10, units = "cm")
+ggsave(file = paste0(figs, "numberoftripsbyhour_peakvsnonpeak.jpg"), width = 20, height = 10, units = "cm")
 
 
 # 2. total trip distances by hh_nr peak hour and non-peak hour
