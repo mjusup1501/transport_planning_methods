@@ -135,7 +135,7 @@ p_hh$hh_inc_f <- factor(p_hh$HH_INC,
 
 p_hh %>%
   filter(!is.na(hh_inc_f) & !is.na(N_O_V)) %>%
-  ggplot(aes(x = hh_inc_f, y = N_O_V)) +
+  ggplot(aes(x = hh_inc_f, y = N_O_V, fill=hh_inc_f)) +
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 315, vjust = 0.5)) +
   scale_y_continuous(breaks = seq(0, 8, by = 1), name = "Number of vehicles") +
@@ -162,11 +162,11 @@ trip$doy <- as.Date(trip$D_O_Y/86400, origin = ISOdate(1582,10,14))
 trip %>%
   group_by(UID, dow_f) %>%
   summarise(count = n()) %>%
-  ggplot(aes(y = count, x = dow_f)) +
+  ggplot(aes(y = count, x = dow_f, fill=dow_f)) +
   geom_boxplot() +
   ylab("Number of trips") +
   xlab("Weekday")
-ggsave(file = paste0(figs,"nroftrips_per_weekday.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = paste0(figs,"nroftrips_by_weekday.jpg"), width = 20, height = 15, units = "cm")
 
 # number of trips vs income
 trip_p_hh <- trip %>%
@@ -194,7 +194,7 @@ eta <- function(df, squared = FALSE) {
   ## SSb
   ssb <- sum(ng * (mg - mtot) ^ 2)
   ## SSt
-  sst <- sum((y - mtot) ^ 2)
+  sst <- sum((df$count - mtot) ^ 2)
   # get eta-squared
   if (squared) {
     res <- ssb/sst
@@ -219,11 +219,11 @@ trip_p_hh %>%
   filter(!is.na(hh_inc_f)) %>%
   group_by(UID, hh_inc_f) %>%
   summarise(count = n()) %>%
-  ggplot(aes(y = count, x = hh_inc_f)) +
+  ggplot(aes(y = count, x = hh_inc_f, fill=hh_inc_f)) +
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 315, vjust = 0.5)) +
   ylab("Number of trips") + xlab("Income")
-ggsave(file = paste0(figs, "nroftrips_per_income.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = paste0(figs, "nroftrips_by_income.jpg"), width = 20, height = 15, units = "cm")
 
 df <- trip_p_hh %>%
   filter(!is.na(hh_inc_f)) %>%
@@ -244,7 +244,7 @@ trip_p_hh %>%
   filter(!is.na(hh_inc_f)) %>%
   group_by(UID, hh_inc_f) %>%
   summarise(total_dist = sum(T_DIST)/1000) %>%
-  ggplot(aes(y = total_dist, x = hh_inc_f)) +
+  ggplot(aes(y = total_dist, x = hh_inc_f, fill=hh_inc_f)) +
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 315, vjust = 0.5)) +
   ylab("Total distance per ID (in km)") + xlab("Household income") +
@@ -252,7 +252,7 @@ trip_p_hh %>%
   annotate("label", x = tick_labels_2.2$hh_inc_f, y = 10, label = str_wrap(paste("Total:",as.character(tick_labels_2.2$total_dist),"km"),7)) +
   theme(plot.margin = margin(t = 10, unit = "pt")) + ## pad "t"op region of the plot
   coord_cartesian(clip = "off")
-ggsave(file = paste0(figs,"totdist_per_income.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = paste0(figs,"totdist_by_income.jpg"), width = 20, height = 15, units = "cm")
 
 # mode choice
 trip_p_hh$mainmode_time <- factor(ifelse(between(trip_p_hh$T_MM_B_T,1,2),"Slow modes",
@@ -328,11 +328,11 @@ ggsave(file = paste0(figs, "numberoftripsbyhour_peakvsnonpeak.jpg"), width = 20,
 weekday_tr %>%
   group_by(HH_NR, T_DEP_ph) %>%
   summarise(total_dist = sum(T_DIST)/1000) %>%
-  ggplot(aes(y = total_dist, x = T_DEP_ph)) +
+  ggplot(aes(y = total_dist, x = T_DEP_ph, fill=T_DEP_ph)) +
   geom_boxplot() +
   labs(title = "Trip distance by household in peak and non-peak hours", x = "", y = "Trip distance by household (in km)") +
   scale_x_discrete(labels = c("Peak hour (7-9 & 16-18:30 hrs)","Non-peak hour"))
-ggsave(file = here::here("plots","tripdistbyhhnr_peakvsnonpeak.pdf"), width = 20, height = 15, units = "cm")
+ggsave(file = paste0(figs, "tripdistbyhhnr_peakvsnonpeak.jpg"), width = 20, height = 15, units = "cm")
 
 
 
