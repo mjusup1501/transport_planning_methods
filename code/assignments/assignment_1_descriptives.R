@@ -10,10 +10,9 @@ library(dplyr)
 library(purrr)
 library(here)
 
-figs <- "/Users/matej/Projects/transport_planning_methods/figures/"
 
 # 0 load data ----
-load("/Users/matej/Projects/transport_planning_methods/Data-20201001/Mobidrive_2002.RData")
+load(here("data", "Mobidrive_2002.RData"))
 
 # 1 preps ----
 # filter for karlsruhe and mainstudy participants
@@ -73,7 +72,7 @@ ggplot(p_hh, aes(x=AGE, fill=sex_ch)) +
   xlab("Age") +
   ylab("Density") +
   ylim(c(0,0.02))
-ggsave(file = here::here("plots","age_distr_density.pdf"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots","age_distr_density.pdf"), width = 20, height = 15, units = "cm")
 
 # age boxplot by sex
 ggplot(p_hh, aes(y=AGE, x=sex_ch)) +
@@ -82,7 +81,7 @@ ggplot(p_hh, aes(y=AGE, x=sex_ch)) +
   theme(legend.title=element_blank(),legend.position="bottom") + 
   xlab("Sex") +
   ylab("Age")
-ggsave(file = here::here("plots","age_distr_boxplot.pdf"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots","age_distr_boxplot.pdf"), width = 20, height = 15, units = "cm")
 
 # age violin plot by sex (boxplot + density)
 ggplot(p_hh, aes(x=sex_ch, y=AGE)) + 
@@ -94,7 +93,7 @@ ggplot(p_hh, aes(x=sex_ch, y=AGE)) +
   theme_bw() +
   labs(x="Gender", y = "Age", caption = "Dotted: Mean\nSolid: Median") +
   theme(text = element_text(size = 18))
-ggsave(file = here::here("plots","age_distr_violinboxplot.pdf"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots","age_distr_violinboxplot.pdf"), width = 20, height = 15, units = "cm")
 
 # education
 str(list(p_hh$EDUC,p_hh$EMPLOYED))
@@ -117,7 +116,7 @@ p_hh %>%
   coord_flip() +
   ggtitle("Education levels by employment status") + 
   theme(legend.position = "bottom")
-ggsave(file = here::here("plots","educlevels_by_employstatus.pdf"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots","educlevels_by_employstatus.pdf"), width = 20, height = 15, units = "cm")
 
 # income
 # page 80 & 81 sch?nfelder
@@ -140,7 +139,7 @@ p_hh %>%
   theme(axis.text.x = element_text(angle = 315, vjust = 0.5)) +
   scale_y_continuous(breaks = seq(0, 8, by = 1), name = "Number of vehicles") +
   scale_x_discrete(name = "Household income") #+ coord_flip()
-ggsave(file = here::here("plots","educlevels_by_employstatus.pdf"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots","educlevels_by_employstatus.pdf"), width = 20, height = 15, units = "cm")
 
 
 # 2.2 ----
@@ -166,7 +165,7 @@ trip %>%
   geom_boxplot() +
   ylab("Number of trips") +
   xlab("Weekday")
-ggsave(file = paste0(figs,"nroftrips_by_weekday.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots", "nroftrips_by_weekday.jpg"), width = 20, height = 15, units = "cm")
 
 # number of trips vs income
 trip_p_hh <- trip %>%
@@ -223,7 +222,7 @@ trip_p_hh %>%
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 315, vjust = 0.5)) +
   ylab("Number of trips") + xlab("Income")
-ggsave(file = paste0(figs, "nroftrips_by_income.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots", "nroftrips_by_income.jpg"), width = 20, height = 15, units = "cm")
 
 df <- trip_p_hh %>%
   filter(!is.na(hh_inc_f)) %>%
@@ -252,7 +251,7 @@ trip_p_hh %>%
   annotate("label", x = tick_labels_2.2$hh_inc_f, y = 10, label = str_wrap(paste("Total:",as.character(tick_labels_2.2$total_dist),"km"),7)) +
   theme(plot.margin = margin(t = 10, unit = "pt")) + ## pad "t"op region of the plot
   coord_cartesian(clip = "off")
-ggsave(file = paste0(figs,"totdist_by_income.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots", "totdist_by_income.jpg"), width = 20, height = 15, units = "cm")
 
 # mode choice
 trip_p_hh$mainmode_time <- factor(ifelse(between(trip_p_hh$T_MM_B_T,1,2),"Slow modes",
@@ -271,7 +270,7 @@ trip_p_hh %>%
   ylab("Modal split") + xlab("Weekday") + labs(fill = "Modes:") +
   scale_y_continuous(breaks = c(seq(0,1, by = 0.2))) +
   ggtitle("Mode commute time per weekday")
-ggsave(file = paste0(figs, "modechoicetime_weekday.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots", "modechoicetime_weekday.jpg"), width = 20, height = 15, units = "cm")
 
 # peak hours
 
@@ -321,7 +320,7 @@ weekday_tr %>%
                     breaks = c("1", "2"), labels = c("Peak hour", "Non-peak hour")) +
   scale_x_continuous(breaks=seq(0,24,1)) +
   labs(title = "Number of trips by hour", x = "Hour", y = "Total trips")
-ggsave(file = paste0(figs, "numberoftripsbyhour_peakvsnonpeak.jpg"), width = 20, height = 10, units = "cm")
+ggsave(file = here("plots", "numberoftripsbyhour_peakvsnonpeak.jpg"), width = 20, height = 10, units = "cm")
 
 
 # 2. total trip distances by hh_nr peak hour and non-peak hour
@@ -332,7 +331,7 @@ weekday_tr %>%
   geom_boxplot() +
   labs(title = "Trip distance by household in peak and non-peak hours", x = "", y = "Trip distance by household (in km)") +
   scale_x_discrete(labels = c("Peak hour (7-9 & 16-18:30 hrs)","Non-peak hour"))
-ggsave(file = paste0(figs, "tripdistbyhhnr_peakvsnonpeak.jpg"), width = 20, height = 15, units = "cm")
+ggsave(file = here("plots", "tripdistbyhhnr_peakvsnonpeak.jpg"), width = 20, height = 15, units = "cm")
 
 
 
