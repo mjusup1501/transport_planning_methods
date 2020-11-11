@@ -11,8 +11,11 @@ library(purrr)
 library(here)
 
 
+rm(list=ls())
+
 # 0 load data ----
 load(here("data", "Mobidrive_2002.RData"))
+
 
 # 1 preps ----
 # filter for karlsruhe and mainstudy participants
@@ -27,7 +30,7 @@ trip <- trip_df %>% filter(CITYCODE == 1 & STUDYCOD == 2)
 p_hh <- p %>% inner_join(hh, by = c("HH_NR","CITYCODE","STUDYCOD")) %>%
   mutate(UID = CITYCODE*1000000 + STUDYCOD*100000 + HH_NR*10 + P_NR) %>%
   arrange(UID, HH_NR, P_NR) %>%
-  select(UID, HH_NR, P_NR, everything())
+  dplyr::select(UID, HH_NR, P_NR, everything())
 
 
 # 2.1 ----
@@ -41,7 +44,7 @@ nrow(p_hh)
 
 # summary of household size
 p_hh %>%
-  select(N_O_HHM) %>%
+  dplyr::select(N_O_HHM) %>%
   map_df(~tidy(summary(.x)), .id = "variable")  
 
 # age distribution
@@ -146,7 +149,7 @@ ggsave(file = here("plots","educlevels_by_employstatus.pdf"), width = 20, height
 trip <- trip %>%
   mutate(UID = CITYCODE*1000000 + STUDYCOD*100000 + HH_NR*10 + P_NR) %>%
   arrange(UID, HH_NR, P_NR, T_NR) %>%
-  select(UID, HH_NR, P_NR, T_NR, everything())
+  dplyr::select(UID, HH_NR, P_NR, T_NR, everything())
 
 # D_O_W: day-of-week
 trip$D_O_W
@@ -210,7 +213,7 @@ df <- trip_p_hh %>%
   group_by(UID, dow_f) %>%
   summarise(count = n()) %>%
   ungroup() %>%
-  select(category=dow_f, count)
+  dplyr::select(category=dow_f, count)
 eta(df)
 
 
@@ -229,7 +232,7 @@ df <- trip_p_hh %>%
   group_by(UID, hh_inc_f) %>%
   summarise(count = n()) %>%
   ungroup() %>%
-  select(category=hh_inc_f, count)
+  dplyr::select(category=hh_inc_f, count)
 eta(df)
 
 
@@ -237,7 +240,7 @@ eta(df)
 tick_labels_2.2 <- trip_p_hh %>%
   filter(!is.na(hh_inc_f)) %>%
   group_by(hh_inc_f) %>%
-  summarise(total_dist = round(sum(T_DIST)/1000,1)) #%>% select(total_dist))
+  summarise(total_dist = round(sum(T_DIST)/1000,1)) #%>% dplyr::select(total_dist))
 
 trip_p_hh %>%
   filter(!is.na(hh_inc_f)) %>%
