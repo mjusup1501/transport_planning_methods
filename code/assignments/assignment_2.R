@@ -4,7 +4,8 @@
 
 # 00 set up ----
 
-pkgs <- c("tidyverse", "lubridate", "broom", "dplyr", "here", "purrr", "AER", "stargazer", "leaps", "reshape")
+pkgs <- c("tidyverse", "lubridate", "broom", "dplyr", "here", "purrr", "AER", "stargazer", "leaps", "reshape", "knitr",
+          "kableExtra", "magrittr")
 new_packages <- pkgs[!(pkgs %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
 
@@ -18,6 +19,10 @@ library(stargazer) # nice latex summary output
 library(leaps) # computing stepwise regression
 library(MASS)
 library(reshape)
+library(knitr)
+library(kableExtra)
+library(magrittr)
+
 
 # see where your path goes
 here()
@@ -70,9 +75,11 @@ target <- c("MN_O_PT")
 df <- p_hh %>% 
   dplyr::select(var_names) %>% 
   mutate_all(~ifelse(is.na(.), median(., na.rm = TRUE), .))
+
 ggplot(gather(df), aes(x=value)) + 
   geom_histogram(bins=10) + 
   facet_wrap(~key, scales = 'free_x')
+ggsave(file = here("plots", "variables_hist.jpg"), width = 20, height = 15, units = "cm")
 
 
 # 1 fit a model ----
@@ -165,11 +172,18 @@ test_df <- regression_df(p_hh_syn, var_names, vars_factor, vars_numeric, target)
 pred <- paste0(target, "_PRED")
 test_df$pred <- predict(step.model, test_df)
 train_df$pred <- predict(step.model, train_df)
-plot_train <- train_df %>% dplyr::select(pred)
-plot_train$type <- "Train"
-plot_test <- test_df %>% dplyr::select(pred)
-plot_test$type <- "Test"
-plot_df <- rbind(plot_train, plot_test)
+plot_train <- train_df %>% dplyr::select(MN_O_PT)
+plot_train$type <- "Train MN_O_PT"
+colnames(plot_train)[1] <- "pred"
+plot_train_p <- train_df %>% dplyr::select(pred)
+plot_train_p$type <- "Train Prediction"
+plot_test <- test_df %>% dplyr::select(MN_O_PT)
+plot_test$type <- "Test MN_O_PT"
+colnames(plot_test)[1] <- "pred"
+plot_test_p <- test_df %>% dplyr::select(pred)
+plot_test_p$type <- "Test Prediction"
+plot_df <- rbind(plot_train, plot_train_p, plot_test, plot_test_p)
+
 
 ggplot(plot_df, aes(x=type, y=pred, fill=type)) + 
   geom_violin(alpha = 0.5) +
@@ -178,8 +192,10 @@ ggplot(plot_df, aes(x=type, y=pred, fill=type)) +
   stat_summary(fun = mean, geom="errorbar", aes(ymax = ..y.., ymin = ..y..),
                width = 0.2, size = 0.5, linetype = "dotted") +
   theme_bw() +
-  labs(x="Population", y = "Predicted Mean Trips per Day", caption = "Dotted: Mean\nSolid: Median") +
-  theme(text = element_text(size = 18))
+  labs(x="Population", y = "Mean Trips per Day", caption = "Dotted: Mean\nSolid: Median") +
+  theme(text = element_text(size = 12))
+ggsave(file = here("plots", "train_test_dist.jpg"), width = 20, height = 15, units = "cm")
+
 
 
 ######################################################################################
@@ -353,10 +369,29 @@ while (!cond){
 
 # It's a lot simpler to use IPF function which yields the same results in a more elegant manner
 r <- ipf(1:10, P, A, zonal_impedance)
-r$trips
+
+dims <- c("City Centre","South Town","North Town","East Town","West-Suburb","South-Suburb","North-Suburb",
+          "East-Suburb","Wettersbach","Neureuth")
+impedance <- matrix(zonal_impedance, 10, 10,dimnames = list(dims,dims))
+impedance %>%
+  kable(format = 'latex', booktabs = TRUE) %>%
+  add_header_above(header = c("Text" = 2, "Values" = 2))
+
+n <- 10
+trips <- matrix(0, 11, 11, dimnames = list(c(dims,"Column sum"),c(dims,"Row sum")))
+trips[1:n, 1:n] <- zonal_trips
+trips[1:n,n+1] <- rowSums(trips[1:n,1:n])
+trips[n+1,1:n] <- colSums(trips[1:n,1:n])
+trips[n+1,n+1] <- sum(trips[1:n,n+1])
+trips %>%
+  kable(format = 'latex', booktabs = TRUE) %>%
+  add_header_above(header = c("Text" = 2, "Values" = 2))
+
+r$trips %>%
+  kable(format = 'latex', booktabs = TRUE) %>%
+  add_header_above(header = c("Text" = 2, "Values" = 2))
 # have a look here to see how to code loops:
 # https://www.datacamp.com/community/tutorials/tutorial-on-loops-in-r?utm_source=adwords_ppc&utm_campaignid=898687156&utm_adgroupid=48947256715&utm_device=c&utm_keyword=&utm_matchtype=b&utm_network=g&utm_adpostion=1t1&utm_creative=255798340456&utm_targetid=aud-390929969673:dsa-473406582635&utm_loc_interest_ms=&utm_loc_physical_ms=1003297&gclid=CjwKCAiAz7TfBRAKEiwAz8fKOCIL6X9eZMrF2fpvSKODUgK4BKzNtmeqpo3LgqQJTN6LOXmz3bwlZRoCHxsQAvD_BwE
-
 
 test_df$UID <- p_hh_syn$UID
 test_df$T_ORIG <- p_hh_syn$LOC_HH
@@ -373,8 +408,8 @@ test_df <- test_df %>% mutate(zone_orig = case_when(T_ORIG %in% zone1 ~ 1,
 
 P <- test_df %>% 
   group_by(zone_orig) %>% 
-  summarise(P = sum(MN_O_PT))
-P 
+  summarise(P = 42 * sum(MN_O_PT))
+P
 P <- rbind(P, c(3, 0)) %>%
   arrange(zone_orig) %>% 
   dplyr::select(P) %>% 
@@ -382,4 +417,8 @@ P <- rbind(P, c(3, 0)) %>%
 A_pct <- c(0.21, 0.08, 0.12, 0.09, 0.17, 0.07, 0.15, 0.04, 0.04, 0.03)
 A <- sum(P) * A_pct
 r <- ipf(1:10, P, A, zonal_impedance)
+r$trips %>%
+  kable(format = 'latex', booktabs = TRUE) %>%
+  add_header_above(header = c("Text" = 2, "Values" = 2))
+
 r$trips
